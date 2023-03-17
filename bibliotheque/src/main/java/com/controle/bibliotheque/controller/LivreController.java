@@ -624,7 +624,85 @@ public class QuartzDemoApplication {
 
 
 
+///////////////////////////////
+package org.sid.QuartzDemo.jobsPackage.jobs;
 
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
+import org.quartz.Job;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+import org.sid.QuartzDemo.ComputeData;
+
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+
+public class CreatePdfJob implements Job {
+    @Override
+    public void execute(JobExecutionContext context) throws JobExecutionException {
+
+        ComputeData data=new ComputeData();
+        data.setData();
+        Document document =new Document();
+        PdfPTable table = new PdfPTable(new float[] {1,1,1,1});
+        table.getDefaultCell().setHorizontalAlignment(Element.ALIGN_CENTER);
+        table.addCell("Voyage vers");
+        table.addCell("départ le");
+        table.addCell("Classe");
+        table.addCell("Cout");
+        
+        table.setHeaderRows(1);
+
+        PdfPCell[] cells = table.getRow(0).getCells();
+        for (int j = 0; j < cells.length ; j++) {
+            cells[j].setBackgroundColor(BaseColor.GRAY);
+        }
+
+        for (int i = 0; i < data.voyages.toArray().length; i++) {
+            table.addCell(data.voyages.get(i).getDestination().getName());
+            table.addCell(data.voyages.get(i).getDate().toString());
+            table.addCell(data.voyages.get(i).getClasseVoyage().name());
+            table.addCell(String.valueOf(data.voyages.get(i).calculeCout())+"euros");
+        }
+        try {
+            PdfWriter.getInstance(document,new FileOutputStream("Voyages.pdf"));
+            document.open();
+            document.add(table);
+            document.close();
+            System.out.println("Done!!");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+
+    }
+}
+
+
+///////////////////
+To add in service
+public void runCreatePdfJob() {
+		scheduler.schedule(CreatePdfJob.class, new TimerInfo(1,false,5000,1000,"My callBack Data"));
+	}
+	
+
+
+
+
+
+///////////
+to add in controller
+
+
+@GetMapping("/runcreatepdf")
+	public void runCreatePdf() {
+		service.runCreatePdfJob();
+	}
 
 
 
